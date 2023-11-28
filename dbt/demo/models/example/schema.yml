@@ -1,0 +1,39 @@
+
+version: 2
+
+models:
+  - name: client
+    description: "A starter dbt model"
+    columns:
+      - name: clinet_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: product
+    description: "A starter dbt model"
+    columns:
+      - name: product_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: applications
+    description: "A starter dbt model"
+    columns:
+      - name: application_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: transactions
+    description: "A starter dbt model"
+    columns:
+      - name: transaction_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null

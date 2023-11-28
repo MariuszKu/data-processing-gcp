@@ -1,0 +1,10 @@
+pandas
+Faker
+fsspec
+gcsfs
+pyarrow
+polars
+argparse
+openpyxl
+xlsx2csv
+pandas-gbq

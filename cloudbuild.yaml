@@ -1,0 +1,57 @@
+steps:
+# GCP Cloud Build
+
+  - id: 'tf apply'
+    name: 'hashicorp/terraform:1.5.0'
+    entrypoint: 'sh'
+    args: 
+    - '-c'
+    - | 
+        cd terraform/
+        terraform  init
+        terraform apply -var-file="dev.tfvars" -auto-approve
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'sh'
+    args: 
+      - '-c'
+      - 'docker build -t gcr.io/$PROJECT_ID/test/worker . ' 
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'sh'
+    args: 
+      - '-c'
+      - 'docker build -t gcr.io/$PROJECT_ID/test/dbt dbt/ ' 
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bq'
+    id: 'create raw tables'
+    args:
+    - query
+    - --use_legacy_sql=false
+    - " CREATE OR REPLACE EXTERNAL TABLE demo${_ENV}raw.card_operations
+        OPTIONS (
+        format = 'parquet',
+        uris = ['gs://demo-${_ENV}-bk-silver/card_operations/*']
+        );
+
+        CREATE OR REPLACE EXTERNAL TABLE demo${_ENV}raw.clients
+        OPTIONS (
+        format = 'parquet',
+        uris = ['gs://demo-${_ENV}-bk-silver/clients/*']);
+
+        CREATE OR REPLACE EXTERNAL TABLE demo${_ENV}raw.client_applications
+        OPTIONS (
+        format = 'parquet',
+        uris = ['gs://demo-${_ENV}-bk-silver/client_applications/*']);
+
+        CREATE OR REPLACE EXTERNAL TABLE demo${_ENV}raw.branch
+        OPTIONS (
+        format = 'parquet',
+        uris = ['gs://demo-${_ENV}-bk-silver/branch/*']);
+      "
+
+images: ['gcr.io/$PROJECT_ID/test/worker','gcr.io/$PROJECT_ID/test/dbt']
+substitutions:
+    _ENV: "dev"
+

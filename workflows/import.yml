@@ -1,0 +1,62 @@
+# This is a sample workflow to test or replace with your source code.
+#
+# This workflow passes the region where the workflow is deployed
+# to the Wikipedia API and returns a list of related Wikipedia articles.
+# A region is retrieved from the GOOGLE_CLOUD_LOCATION system variable
+# unless you input your own search term; for example, {"searchTerm": "asia"}.
+main:
+    params: [event]
+    steps:
+        - init:
+            assign:
+                - project_id: ${sys.get_env("GOOGLE_CLOUD_PROJECT_ID")}
+        - parallelStep:
+                parallel:
+                    branches:
+                        - client:
+                             steps:
+                                - clients:
+                                    call: googleapis.run.v1.namespaces.jobs.run
+                                    args:
+                                        name: ${"namespaces/" + project_id + "/jobs/worker"}
+                                        location: "europe-central2"
+                                        body:
+                                            overrides:
+                                                containerOverrides:
+                                                    args: [ "app/convert.py","-f","clients"]
+                                    result: job_execution
+                        - app:
+                            steps:
+                                - apps:
+                                    call: googleapis.run.v1.namespaces.jobs.run
+                                    args:
+                                        name: ${"namespaces/" + project_id + "/jobs/worker"}
+                                        location: "europe-central2"
+                                        body:
+                                            overrides:
+                                                containerOverrides:
+                                                    args: [ "app/convert.py","-f","applications"]
+                                    result: job_execution
+                        - tran:
+                            steps:
+                                - trans:
+                                    call: googleapis.run.v1.namespaces.jobs.run
+                                    args:
+                                        name: ${"namespaces/" + project_id + "/jobs/worker"}
+                                        location: "europe-central2"
+                                        body:
+                                            overrides:
+                                                containerOverrides:
+                                                    args: [ "app/convert.py","-f","transactions"]
+                                    result: job_execution
+
+        - dbt:
+            call: googleapis.run.v1.namespaces.jobs.run
+            args:
+                name: ${"namespaces/" + project_id + "/jobs/dbt"}
+                location: "europe-west1"
+
+            result: job_execution
+
+
+

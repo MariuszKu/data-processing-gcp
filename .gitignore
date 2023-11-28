@@ -1,0 +1,4 @@
+.terraform/
+venv/
+demo.json
+terraform/dev.tfvars
